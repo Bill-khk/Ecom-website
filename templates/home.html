@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head>
+    <title>Store Home</title>
+</head>
+<body>
+    <h1>Products</h1>
+    <ul>
+        {% for product in products %}
+            <li>{{ product.name }} - ${{ product.price }}
+                <a href="{{ url_for('add_to_cart', product_id=product.id) }}">Add to Cart</a>
+            </li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('cart') }}">Go to Cart</a>
+</body>
+</html>
