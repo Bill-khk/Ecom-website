@@ -7,6 +7,7 @@
     <h1>Checkout Page</h1>
     <p>Total Price : {{price}} $</p>
     <form action="#" method="POST">
+        {{form.name.label}} {{form.name()}}<br>
         {{form.number.label}} {{form.number()}}<br>
         {{form.exp_month.label}} {{form.exp_month()}}/{{form.exp_year.label}} {{form.exp_year()}}
         {{form.cvc.label}} {{form.cvc()}}<br>

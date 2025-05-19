@@ -67,28 +67,55 @@ def cart():
     return render_template('cart.html', cart_items=cart_items, total=total)
 
 
-from wtforms import IntegerField, SelectField, SubmitField
+from wtforms import IntegerField, SelectField, SubmitField, StringField
 from wtforms.validators import DataRequired, Length
 from flask_wtf import FlaskForm
-import datetime
+import datetime, stripe
 
 year = int(datetime.datetime.now().strftime("%Y"))
 years = [year + i for i in range(0, 5)]
 year_choices = [(str(y), str(y)) for y in years]
 class CheckoutForm(FlaskForm):
+    name = StringField('name', validators=[DataRequired()])
     number = IntegerField('Card number', validators=[DataRequired()])
     exp_month = SelectField('exp_month', choices=[(1, '01'), (2, '02'), (3, '03'), (4, '04'), (5, '05'), (6, '06'), (7, '07'), (8, '08'), (9, '09'), (10, '10'), (11, '11'), (12, '12')], validators=[DataRequired()])
     exp_year = SelectField('exp_year', choices=[year_choices[0], year_choices[1], year_choices[2], year_choices[3], year_choices[4]], validators=[DataRequired()])
     cvc = IntegerField('cvc', validators=[Length(min=3, max=3)])
     submit = SubmitField('Pay')
 
+
 @app.route('/checkout/<price>', methods=['GET', 'POST'])
 def checkout(price):
-    stripe_key = os.environ.get('STRIPE_KEY')
-    payment_method = 'card'
+    STRIPE_KEY = os.environ.get('STRIPE_KEY')
+    stripe.api_key = STRIPE_KEY
     form = CheckoutForm()
     if request.method == 'POST':
-        print(f'{request.form['card_number']}, {request.form['exp_month']}/{request.form['exp_year']}, {request.form['CVC']}')
+        print(f'{int(price[0:price.find('.')])}$ - {request.form['name']} - {request.form['number']}, {request.form['exp_month']}/{request.form['exp_year']}, {request.form['cvc']}')
+        CONNECTED_ACCOUNT_ID = os.environ.get('ACC_ID')
+        payment_intent = stripe.PaymentIntent.create(
+            amount=int(float(price) * 100),  # amount in cents
+            currency="usd",
+            payment_method="pm_card_visa",
+            stripe_account=f'{CONNECTED_ACCOUNT_ID}',
+        )
+
+        # payment_method = stripe.PaymentMethod.create(
+        #     type="card",
+        #     card={
+        #         "exp_month": int(request.form['exp_month']),
+        #         "exp_year": int(request.form['exp_year']),
+        #         "number": str(request.form['number']),
+        #         "cvc": str(request.form['cvc']),
+        #     },
+        # )
+    else:
+        # Test values
+        form.name.data = 'John Doe'
+        form.number.data = '4242424242424242'
+        form.exp_month.data = '12'
+        form.exp_year.data = '2025'
+        form.cvc.data = '123'
+
     # TODO: Implement Stripe Checkout integration here
     return render_template('checkout.html', form=form, price=price)
 
