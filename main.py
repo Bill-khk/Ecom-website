@@ -46,11 +46,13 @@ def add_to_cart(product_id):
     session.modified = True
     return redirect(url_for('cart'))
 
+
 @app.route('/remove_from_cart/<int:product_id>')
 def remove_from_cart(product_id):
     session['cart'].remove(product_id)
     session.modified = True
     return redirect(url_for('cart'))
+
 
 @app.route('/cart')
 def cart():
@@ -75,11 +77,17 @@ import datetime, stripe
 year = int(datetime.datetime.now().strftime("%Y"))
 years = [year + i for i in range(0, 5)]
 year_choices = [(str(y), str(y)) for y in years]
+
+
 class CheckoutForm(FlaskForm):
     name = StringField('name', validators=[DataRequired()])
     number = IntegerField('Card number', validators=[DataRequired()])
-    exp_month = SelectField('exp_month', choices=[(1, '01'), (2, '02'), (3, '03'), (4, '04'), (5, '05'), (6, '06'), (7, '07'), (8, '08'), (9, '09'), (10, '10'), (11, '11'), (12, '12')], validators=[DataRequired()])
-    exp_year = SelectField('exp_year', choices=[year_choices[0], year_choices[1], year_choices[2], year_choices[3], year_choices[4]], validators=[DataRequired()])
+    exp_month = SelectField('exp_month',
+                            choices=[(1, '01'), (2, '02'), (3, '03'), (4, '04'), (5, '05'), (6, '06'), (7, '07'),
+                                     (8, '08'), (9, '09'), (10, '10'), (11, '11'), (12, '12')],
+                            validators=[DataRequired()])
+    exp_year = SelectField('exp_year', choices=[year_choices[0], year_choices[1], year_choices[2], year_choices[3],
+                                                year_choices[4]], validators=[DataRequired()])
     cvc = IntegerField('cvc', validators=[Length(min=3, max=3)])
     submit = SubmitField('Pay')
 
@@ -90,7 +98,8 @@ def checkout(price):
     stripe.api_key = STRIPE_KEY
     form = CheckoutForm()
     if request.method == 'POST':
-        print(f'{int(price[0:price.find('.')])}$ - {request.form['name']} - {request.form['number']}, {request.form['exp_month']}/{request.form['exp_year']}, {request.form['cvc']}')
+        print(
+            f'{int(price[0:price.find('.')])}$ - {request.form['name']} - {request.form['number']}, {request.form['exp_month']}/{request.form['exp_year']}, {request.form['cvc']}')
         CONNECTED_ACCOUNT_ID = os.environ.get('ACC_ID')
         payment_intent = stripe.PaymentIntent.create(
             amount=int(float(price) * 100),  # amount in cents
@@ -118,6 +127,29 @@ def checkout(price):
 
     # TODO: Implement Stripe Checkout integration here
     return render_template('checkout.html', form=form, price=price)
+
+
+@app.route('/create-checkout-session/<price>', methods=['POST'])
+def create_checkout_session(price):
+    STRIPE_KEY = os.environ.get('STRIPE_KEY')
+    stripe.api_key = STRIPE_KEY
+    session = stripe.checkout.Session.create(
+        line_items=[{
+            'price_data': {
+                'currency': 'usd',
+                'product_data': {
+                    'name': 'Total price',
+                },
+                'unit_amount': int(float(price) * 100),
+            },
+            'quantity': 1,
+        }],
+        mode='payment',
+        success_url=url_for('success', _external=True),
+        cancel_url=url_for('cancel', _external=True),
+    )
+
+    return redirect(session.url, code=303)
 
 
 if __name__ == '__main__':

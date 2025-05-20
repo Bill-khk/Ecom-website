@@ -6,17 +6,8 @@
 <body>
     <h1>Checkout Page</h1>
     <p>Total Price : {{price}} $</p>
-    <form action="#" method="POST">
-        {{form.name.label}} {{form.name()}}<br>
-        {{form.number.label}} {{form.number()}}<br>
-        {{form.exp_month.label}} {{form.exp_month()}}/{{form.exp_year.label}} {{form.exp_year()}}
-        {{form.cvc.label}} {{form.cvc()}}<br>
+    <form action="/create-checkout-session/{{price}}" method="POST">
         {{form.submit.label}} {{form.submit()}}<br>
-        <!--
-    <label>Card number : </label><input name="card_number" text="Card number"><br>
-        <label>Exp. date : </label> <input name="exp_month">/<input name="exp_year">
-        <label>CVC : </label><input name="CVC"><br><br>
-        <button type="submit">Pay</button><br>-->
     </form>
     <a href="{{ url_for('home') }}">Back to Home</a>
 </body>
